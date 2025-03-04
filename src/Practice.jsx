@@ -4,6 +4,7 @@ import axios from "axios";
 export default function Practice() {
   const [items, setItems] = useState([]);
   const [formData, setFormData] = useState({
+    id: "",
     name: "",
     year: "",
     price: "",
@@ -11,7 +12,11 @@ export default function Practice() {
     hardDiskSize: "",
   });
   const [showForm, setShowForm] = useState(false);
-  const apiUrl = "https://api.restful-api.dev/objects";
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
+  const [showFetchByIdForm, setShowFetchByIdForm] = useState(false);
+
+  //.env waala
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   const fetchAllNamesAndData = async () => {
     try {
@@ -23,9 +28,38 @@ export default function Practice() {
     }
   };
 
-  const handleSubmit = async () => {
+  const fetchDataById = async () => {
     try {
-      const newItem = {
+      const res = await axios.get(`${apiUrl}/${formData.id}`);
+      setItems([res.data]);
+    } catch (error) {
+      console.error("Error fetching data by ID:", error);
+      setItems([]);
+    }
+  };
+
+    const handleSubmit = async () => {
+      try {
+        const newItem = {
+          name: formData.name,
+          data: {
+            year: formData.year,
+            price: formData.price,
+            cpuModel: formData.cpuModel,
+            hardDiskSize: formData.hardDiskSize,
+          },
+        };
+        const res = await axios.post(apiUrl, newItem);
+        setItems([...items, res.data]);
+        setShowForm(false);
+      } catch (error) {
+        console.error("Error posting data:", error);
+      }
+    };
+
+  const handleUpdate = async () => {
+    try {
+      const updatedItem = {
         name: formData.name,
         data: {
           year: formData.year,
@@ -34,13 +68,14 @@ export default function Practice() {
           hardDiskSize: formData.hardDiskSize,
         },
       };
-      const res = await axios.post(apiUrl, newItem);
-      setItems([...items, res.data]);
-      setShowForm(false);
+      await axios.patch(`${apiUrl}/${formData.id}`, updatedItem);
+      setShowUpdateForm(false);
+      fetchAllNamesAndData();
     } catch (error) {
-      console.error("Error posting data:", error);
+      console.error("Error updating data:", error);
     }
   };
+  
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -57,14 +92,40 @@ export default function Practice() {
           Fetch Data
         </button>
         <button
+          className="px-6 py-3 bg-yellow-500 text-white font-semibold rounded-full shadow-lg hover:bg-yellow-600 transition-all"
+          onClick={() => setShowFetchByIdForm(true)}
+        >
+          Fetch Data by ID
+        </button>
+        <button
           className="px-6 py-3 bg-green-500 text-white font-semibold rounded-full shadow-lg hover:bg-green-600 transition-all"
           onClick={() => setShowForm(true)}
         >
           Post Data
         </button>
+        <button
+          className="px-6 py-3 bg-orange-500 text-white font-semibold rounded-full shadow-lg hover:bg-orange-600 transition-all"
+          onClick={() => setShowUpdateForm(true)}
+        >
+          Update Data
+        </button>
       </div>
-      {showForm && (
+      {showFetchByIdForm && (
         <div className="mb-6 space-y-4">
+          <input type="text" name="id" placeholder="Enter ID" value={formData.id} onChange={handleChange} className="w-full p-3 border rounded" />
+          <button
+            className="px-6 py-3 bg-purple-500 text-white font-semibold rounded-full shadow-lg hover:bg-purple-600 transition-all"
+            onClick={fetchDataById}
+          >
+            Fetch by ID
+          </button>
+        </div>
+      )}
+      {(showForm || showUpdateForm) && (
+        <div className="mb-6 space-y-4">
+          {showUpdateForm && (
+            <input type="text" name="id" placeholder="Enter ID" value={formData.id} onChange={handleChange} className="w-full p-3 border rounded" />
+          )}
           <input type="text" name="name" placeholder="Name" value={formData.name} onChange={handleChange} className="w-full p-3 border rounded" />
           <input type="text" name="year" placeholder="Year" value={formData.year} onChange={handleChange} className="w-full p-3 border rounded" />
           <input type="text" name="price" placeholder="Price" value={formData.price} onChange={handleChange} className="w-full p-3 border rounded" />
@@ -72,9 +133,9 @@ export default function Practice() {
           <input type="text" name="hardDiskSize" placeholder="Hard Disk Size" value={formData.hardDiskSize} onChange={handleChange} className="w-full p-3 border rounded" />
           <button
             className="px-6 py-3 bg-purple-500 text-white font-semibold rounded-full shadow-lg hover:bg-purple-600 transition-all"
-            onClick={handleSubmit}
+            onClick={showUpdateForm ? handleUpdate : handleSubmit}
           >
-            Submit Data
+            {showUpdateForm ? "Submit Update" : "Submit Data"}
           </button>
         </div>
       )}
