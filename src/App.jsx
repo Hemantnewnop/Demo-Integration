@@ -1,6 +1,5 @@
-
 import './App.css'
-import Practice from './Practice'
+import Practice from './components/Practice';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 function App() {
